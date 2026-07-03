@@ -1,15 +1,27 @@
+import { useState } from "react";
 import { Button } from "antd";
 import { SearchBar}  from "../components/SearchBar";
+import { TaskForm } from "../components/TaskForm";
 
 export function Dashboard() {
+    const [open, setOpen] = useState(false);
+    
     return (
         <div style={{ padding: 20 }}>
 
             <h1>Dashboard</h1>
 
-            <Button type="primary">
+            <Button 
+                type="primary"
+                onClick={() => setOpen(true)}
+            >
                 New Task
             </Button>
+
+            <TaskForm
+                open={open}
+                onClose={() => setOpen(false)}
+            />
 
             <br />
             <br />
