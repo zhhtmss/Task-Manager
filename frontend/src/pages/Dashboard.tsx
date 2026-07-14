@@ -1,84 +1,44 @@
-import { useState, useEffect } from "react";
-import { Button, Spin, message } from "antd";
+import { useState } from "react";
+import { Button, Spin } from "antd";
 import { Link } from "react-router-dom";
 
 import { SearchBar, type SearchModes } from "../components/SearchBar";
+
 import { TaskForm } from "../components/TaskForm";
 import { TaskCard } from "../components/TaskCard";
 
-import { tasks as initialTasks } from "../data/tasks";
+import { useTasks } from "../hooks/useTasks";
 import type { Task } from "../types/task";
 
 export function Dashboard() {
     const [open, setOpen] = useState(false);
-    const [tasks, setTasks] = useState<Task[]>(initialTasks);
     const [editTask, setEditTask] = useState<Task | null>(null);
+
     const [currentSearch, setCurrentSearch] = useState("");
     const [archiveSearch, setArchiveSearch] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    
-    const [currentModes, setCurrentModes] = useState({
-        title: false,
-        description: false,
-        tags: false,
-    });
-    
-    const [archiveModes, setArchiveModes] = useState({
+
+    const [currentModes, setCurrentModes] = useState<SearchModes>({
         title: false,
         description: false,
         tags: false,
     });
 
-    const changeSearchMode = (
-        modes: SearchModes,
-        setModes: (modes: SearchModes) => void,
-        name: keyof SearchModes
-    ) => {
-    setModes({
-        ...modes,
-        [name]: !modes[name],
+    const [archiveModes, setArchiveModes] = useState<SearchModes>({
+        title: false,
+        description: false,
+        tags: false,
     });
-    };
 
-    const filterTasks = (
-        task: Task,
-        search: string,
-        modes: SearchModes
-    ) => {
-        const text = search.toLowerCase().trim();
+    const {
+        tasks,
+        isLoading,
+        isFetching,
+        error,
+        createTask: createTaskRequest,
+        updateTask: updateTaskRequest,
+    } = useTasks();
 
-        if (text === "") {
-            return true;
-        }
-
-        const selectedCount = Object.values(modes).filter(Boolean).length;
-
-        const searchEverywhere =
-            selectedCount === 0 || selectedCount === 3;
-
-        const titleMatches =
-            task.title.toLowerCase().includes(text);
-
-        const descriptionMatches =
-            task.description.toLowerCase().includes(text);
-
-        const tagsMatch = task.tags.some((tag) =>
-            tag.text.toLowerCase().includes(text)
-        );
-
-        if (searchEverywhere) {
-            return titleMatches || descriptionMatches || tagsMatch;
-        }
-
-        return (
-            (modes.title && titleMatches) ||
-            (modes.description && descriptionMatches) ||
-            (modes.tags && tagsMatch)
-        );
-    };
-
-    const createTask = (
+    const createTask = async (
         title: string,
         description: string,
         tags: string,
@@ -90,7 +50,7 @@ export function Dashboard() {
             id: Date.now().toString(),
             title,
             description,
-        
+
             tags: tags
                 .split(",")
                 .filter((tag) => tag.trim() !== "")
@@ -98,74 +58,49 @@ export function Dashboard() {
                     id: Math.random().toString(),
                     text: tag.trim(),
                 })),
-            
+
             createdAt: new Date().toLocaleString(),
             updatedAt: new Date().toLocaleString(),
-            
+
             status: "active",
             backgroundColor,
             backgroundImage,
             imageOpacity,
         };
 
-        setTasks([...tasks, newTask]);
+        await createTaskRequest(newTask);
+
+        setOpen(false);
     };
 
-    const deleteTask = (id: string) => {
-        setTasks(
-            tasks.map((task) => {
-                if (task.id === id) {
-                    return {
-                        ...task,
-                        status: "deleted",
-                        deletedAt: new Date().toLocaleString(),
-                        completedAt: undefined,
-                        updatedAt: new Date().toLocaleString(),
-                    };
-                }
-
-                return task;
-            })
-        );
+    const deleteTask = async (id: string) => {
+        await updateTaskRequest(id, {
+            status: "deleted",
+            deletedAt: new Date().toLocaleString(),
+            completedAt: undefined,
+            updatedAt: new Date().toLocaleString(),
+        });
     };
 
-    const completeTask = (id: string) => {
-        setTasks(
-            tasks.map((task) => {
-                if (task.id === id) {
-                    return {
-                        ...task,
-                        status: "completed",
-                        completedAt: new Date().toLocaleString(),
-                        deletedAt: undefined,
-                        updatedAt: new Date().toLocaleString(),
-                    };
-                }
-
-                return task;
-            })
-        );
+    const completeTask = async (id: string) => {
+        await updateTaskRequest(id, {
+            status: "completed",
+            completedAt: new Date().toLocaleString(),
+            deletedAt: undefined,
+            updatedAt: new Date().toLocaleString(),
+        });
     };
 
-    const restoreTask = (id: string) => {
-        setTasks(
-            tasks.map((task) => {
-                if (task.id === id) {
-                    return {
-                        ...task,
-                        status: "active",
-                        deletedAt: undefined,
-                        completedAt: undefined,
-                        updatedAt: new Date().toLocaleString(),
-                    };
-                }
-
-                return task;
-            })
-        );
+    const restoreTask = async (id: string) => {
+        await updateTaskRequest(id, {
+            status: "active",
+            deletedAt: undefined,
+            completedAt: undefined,
+            updatedAt: new Date().toLocaleString(),
+        });
     };
 
-    const updateTask = (
+    const updateTask = async (
         title: string,
         description: string,
         tags: string,
@@ -177,53 +112,27 @@ export function Dashboard() {
             return;
         }
 
-        setTasks(
-            tasks.map((task) => {
-                if (task.id === editTask.id) {
-                    return {
-                        ...task,
-                        title,
-                        description,
+        await updateTaskRequest(editTask.id, {
+            title,
+            description,
 
-                        tags: tags
-                            .split(",")
-                            .filter((tag) => tag.trim() !== "")
-                            .map((tag) => ({
-                                id: Math.random().toString(),
-                                text: tag.trim(),
-                            })),
+            tags: tags
+                .split(",")
+                .filter((tag) => tag.trim() !== "")
+                .map((tag) => ({
+                    id: Math.random().toString(),
+                    text: tag.trim(),
+                })),
 
-                        backgroundColor,
-                        backgroundImage,
-                        imageOpacity,
-                        updatedAt: new Date().toLocaleString(),
-                    };
-                }
-
-                return task;
-            })
-        );
+            backgroundColor,
+            backgroundImage,
+            imageOpacity,
+            updatedAt: new Date().toLocaleString(),
+        });
 
         setEditTask(null);
         setOpen(false);
     };
-    useEffect(() => {
-        setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-    }, []);
-
-    useEffect(() => {
-        if (!loading) {
-            setRefreshing(true);
-
-            message.loading("Updating tasks...", 1);
-
-            setTimeout(() => {
-                setRefreshing(false);
-            }, 1000);
-        }
-    }, [loading]);
 
     const openCreateForm = () => {
         setEditTask(null);
@@ -240,12 +149,67 @@ export function Dashboard() {
         setEditTask(null);
     };
 
+    const changeSearchMode = (
+        modes: SearchModes,
+        setModes: (modes: SearchModes) => void,
+        name: keyof SearchModes
+    ) => {
+        setModes({
+            ...modes,
+            [name]: !modes[name],
+        });
+    };
 
-    if (loading) {
+    const filterTasks = (
+        task: Task,
+        search: string,
+        modes: SearchModes
+    ) => {
+        const searchText = search.toLowerCase().trim();
+
+        if (searchText === "") {
+            return true;
+        }
+
+        const selectedModes = Object.values(modes).filter(
+            (mode) => mode
+        ).length;
+
+        const searchEverywhere =
+            selectedModes === 0 || selectedModes === 3;
+
+        const titleMatches = task.title
+            .toLowerCase()
+            .includes(searchText);
+
+        const descriptionMatches = task.description
+            .toLowerCase()
+            .includes(searchText);
+
+        const tagsMatch = task.tags.some((tag) =>
+            tag.text.toLowerCase().includes(searchText)
+        );
+
+        if (searchEverywhere) {
+            return (
+                titleMatches ||
+                descriptionMatches ||
+                tagsMatch
+            );
+        }
+
+        return (
+            (modes.title && titleMatches) ||
+            (modes.description && descriptionMatches) ||
+            (modes.tags && tagsMatch)
+        );
+    };
+
+    if (isLoading) {
         return (
             <div
                 style={{
-                    height: "100vh",
+                    minHeight: "100vh",
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
@@ -255,12 +219,42 @@ export function Dashboard() {
             </div>
         );
     }
+
+    if (error) {
+        return (
+            <div style={{ padding: 20 }}>
+                <h2>Не удалось загрузить задачи</h2>
+                <p>Проверь, запущен ли Express-сервер.</p>
+            </div>
+        );
+    }
+
     return (
         <div style={{ padding: 20 }}>
+            {isFetching && (
+                <div
+                    style={{
+                        position: "fixed",
+                        top: 20,
+                        right: 20,
+                        zIndex: 1000,
+                        padding: "12px 18px",
+                        backgroundColor: "#ffffff",
+                        borderRadius: 8,
+                        boxShadow: "0 2px 10px #cccccc",
+                    }}
+                >
+                    Updating tasks...
+                </div>
+            )}
+
             <h1>Dashboard</h1>
+
             <Link to="/settings">
                 <Button>Settings</Button>
             </Link>
+
+            {" "}
 
             <Button
                 type="primary"
@@ -271,13 +265,14 @@ export function Dashboard() {
 
             <TaskForm
                 open={open}
-                onClose={closeForm}
-                onCreate={editTask ? updateTask : createTask}
                 task={editTask}
+                onClose={closeForm}
+                onCreate={
+                    editTask
+                        ? updateTask
+                        : createTask
+                }
             />
-
-            <br />
-            <br />
 
             <h2>Current</h2>
 
@@ -294,8 +289,6 @@ export function Dashboard() {
                 }
             />
 
-            <br />
-
             <div
                 style={{
                     display: "flex",
@@ -304,9 +297,15 @@ export function Dashboard() {
                 }}
             >
                 {tasks
-                    .filter((task) => task.status === "active")
+                    .filter(
+                        (task) => task.status === "active"
+                    )
                     .filter((task) =>
-                        filterTasks(task, currentSearch, currentModes)
+                        filterTasks(
+                            task,
+                            currentSearch,
+                            currentModes
+                        )
                     )
                     .map((task) => (
                         <TaskCard
@@ -320,7 +319,7 @@ export function Dashboard() {
                     ))}
             </div>
 
-            <hr />
+            <hr style={{ margin: "30px 0" }} />
 
             <h2>Archive</h2>
 
@@ -337,8 +336,6 @@ export function Dashboard() {
                 }
             />
 
-            <br />
-
             <div
                 style={{
                     display: "flex",
@@ -347,9 +344,15 @@ export function Dashboard() {
                 }}
             >
                 {tasks
-                    .filter((task) => task.status !== "active")
+                    .filter(
+                        (task) => task.status !== "active"
+                    )
                     .filter((task) =>
-                        filterTasks(task, archiveSearch, archiveModes)
+                        filterTasks(
+                            task,
+                            archiveSearch,
+                            archiveModes
+                        )
                     )
                     .map((task) => (
                         <TaskCard
