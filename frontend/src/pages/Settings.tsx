@@ -1,40 +1,44 @@
-import { Button, ColorPicker, Form, InputNumber} from "antd";
+import { Button, ColorPicker, Form, InputNumber, Spin } from "antd";
 
 import { Link } from "react-router-dom";
-import { useSettings } from "../context/SettingsContext";
+
+import { useSettings } from "../hooks/useSettings";
 import type { CardSettings } from "../types/settings";
 
 export function Settings() {
-    const { settings, changeSettings, resetSettings} = useSettings();
+    const {
+        settings,
+        isLoading,
+        isFetching,
+        error,
+        updateSettings,
+    } = useSettings();
 
-    const [form] = Form.useForm();
-
-    const saveSettings = (values: CardSettings) => {
-        changeSettings(values);
+    const saveSettings = async (
+        values: CardSettings
+    ) => {
+        await updateSettings(values);
     };
 
-    const reset = () => {
-        resetSettings();
+    if (isLoading) {
+        return <Spin size="large" />;
+    }
 
-        form.setFieldsValue({
-            backgroundColor: "#ffffff",
-            textColor: "#000000",
-            padding: 16,
-            borderRadius: 8,
-            width: 320,
-            height: 350,
-            titleFontSize: 18,
-            descriptionFontSize: 14,
-        });
-    };
+    if (error || !settings) {
+        return <h2>Не вдалося завантажити налаштування</h2>;
+    }
 
     return (
         <div
             style={{
-                padding: 20,
                 maxWidth: 600,
+                padding: 20,
             }}
         >
+            {isFetching && (
+                <p>Updating settings...</p>
+            )}
+
             <Link to="/">
                 <Button>Dashboard</Button>
             </Link>
@@ -42,7 +46,6 @@ export function Settings() {
             <h1>Card Settings</h1>
 
             <Form
-                form={form}
                 layout="vertical"
                 initialValues={settings}
                 onFinish={saveSettings}
@@ -114,12 +117,6 @@ export function Settings() {
                     htmlType="submit"
                 >
                     Save
-                </Button>
-
-                {" "}
-
-                <Button onClick={reset}>
-                    Reset
                 </Button>
             </Form>
         </div>

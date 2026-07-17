@@ -1,7 +1,7 @@
-import { Button, Card, Tag } from "antd";
+import { Button, Card, Spin, Tag } from "antd";
 
 import type { Task } from "../types/task";
-import { useSettings } from "../context/SettingsContext";
+import { useSettings } from "../hooks/useSettings";
 
 type Props = {
     task: Task;
@@ -18,7 +18,26 @@ export const TaskCard = ({
     onRestore,
     onEdit,
 }: Props) => {
-    const { settings } = useSettings();
+    const {
+        settings,
+        isLoading,
+    } = useSettings();
+
+    if (isLoading || !settings) {
+        return <Spin />;
+    }
+
+    const opacity = task.imageOpacity ?? 0.3;
+
+    const backgroundImage = task.backgroundImage
+        ? `
+            linear-gradient(
+                rgba(255, 255, 255, ${1 - opacity}),
+                rgba(255, 255, 255, ${1 - opacity})
+            ),
+            url("${task.backgroundImage}")
+        `
+        : "none";
 
     return (
         <Card
@@ -34,11 +53,15 @@ export const TaskCard = ({
             style={{
                 width: settings.width,
                 height: settings.height,
-                overflow: "hidden",
                 backgroundColor:
-                    task.backgroundColor || settings.backgroundColor,
+                    task.backgroundColor ||
+                    settings.backgroundColor,
+                backgroundImage,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
                 color: settings.textColor,
                 borderRadius: settings.borderRadius,
+                overflow: "hidden",
             }}
             styles={{
                 body: {
@@ -48,8 +71,9 @@ export const TaskCard = ({
         >
             <p
                 style={{
-                    fontSize: settings.descriptionFontSize,
                     color: settings.textColor,
+                    fontSize:
+                        settings.descriptionFontSize,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     display: "-webkit-box",
@@ -74,33 +98,15 @@ export const TaskCard = ({
 
             <div
                 style={{
-                    maxHeight: 60,
+                    maxHeight: 55,
                     overflow: "hidden",
-                    position: "relative",
                 }}
             >
                 {task.tags.map((tag) => (
-                    <Tag
-                        key={tag.id}
-                        style={{
-                            marginBottom: 5,
-                        }}
-                    >
+                    <Tag key={tag.id}>
                         {tag.text}
                     </Tag>
                 ))}
-
-                <div
-                    style={{
-                        position: "absolute",
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 20,
-                        background:
-                            "linear-gradient(transparent, rgba(255,255,255,0.9))",
-                    }}
-                />
             </div>
 
             <br />
@@ -126,7 +132,9 @@ export const TaskCard = ({
                     {" "}
 
                     <Button
-                        onClick={() => onComplete(task.id)}
+                        onClick={() =>
+                            onComplete(task.id)
+                        }
                     >
                         Complete
                     </Button>
@@ -136,7 +144,9 @@ export const TaskCard = ({
             {task.status === "deleted" && (
                 <>
                     <Button
-                        onClick={() => onRestore(task.id)}
+                        onClick={() =>
+                            onRestore(task.id)
+                        }
                     >
                         Restore
                     </Button>
@@ -144,7 +154,9 @@ export const TaskCard = ({
                     {" "}
 
                     <Button
-                        onClick={() => onComplete(task.id)}
+                        onClick={() =>
+                            onComplete(task.id)
+                        }
                     >
                         Complete
                     </Button>
@@ -154,7 +166,9 @@ export const TaskCard = ({
             {task.status === "completed" && (
                 <>
                     <Button
-                        onClick={() => onRestore(task.id)}
+                        onClick={() =>
+                            onRestore(task.id)
+                        }
                     >
                         Restore
                     </Button>
@@ -163,7 +177,9 @@ export const TaskCard = ({
 
                     <Button
                         danger
-                        onClick={() => onDelete(task.id)}
+                        onClick={() =>
+                            onDelete(task.id)
+                        }
                     >
                         Delete
                     </Button>

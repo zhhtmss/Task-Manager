@@ -28,6 +28,32 @@ type Task = {
 
 type TaskChanges = Partial<Omit<Task, "id" | "createdAt">>;
 
+type CardSettings = {
+    backgroundColor: string;
+    textColor: string;
+    padding: number;
+    borderRadius: number;
+    width: number;
+    height: number;
+    titleFontSize: number;
+    descriptionFontSize: number;
+};
+
+const settingsFilePath = "./data/settings.json";
+
+const readSettings = (): CardSettings => {
+    const data = fs.readFileSync(settingsFilePath, "utf8");
+
+    return JSON.parse(data) as CardSettings;
+};
+
+const writeSettings = (settings: CardSettings) => {
+    fs.writeFileSync(
+        settingsFilePath,
+        JSON.stringify(settings, null, 4)
+    );
+};
+
 const app = express();
 
 app.use(express.json());
@@ -101,6 +127,27 @@ app.patch("/api/tasks/:id", (request, response) => {
 
     sendWithDelay(() => {
         response.json(tasks[taskIndex]);
+    });
+});
+
+app.get("/api/settings", (_request, response) => {
+    sendWithDelay(() => {
+        response.json(readSettings());
+    });
+});
+
+app.patch("/api/settings", (request, response) => {
+    const settings = readSettings();
+
+    const updatedSettings = {
+        ...settings,
+        ...request.body,
+    };
+
+    writeSettings(updatedSettings);
+
+    sendWithDelay(() => {
+        response.json(updatedSettings);
     });
 });
 
