@@ -62,9 +62,7 @@ export const TaskForm = ({
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
-
-            setIsSaving(true);
-
+        
             await onCreate(
                 values.title,
                 values.description || "",
@@ -73,13 +71,11 @@ export const TaskForm = ({
                 values.backgroundImage || "",
                 values.imageOpacity ?? 0.3
             );
-
+        
             form.resetFields();
             onClose();
         } catch (error) {
-            console.log("Task was not saved", error);
-        } finally {
-            setIsSaving(false);
+            console.log("Ошибка создания задачи:", error);
         }
     };
 

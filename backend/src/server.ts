@@ -56,7 +56,11 @@ const writeSettings = (settings: CardSettings) => {
 
 const app = express();
 
-app.use(express.json());
+app.use(
+    express.json({
+        limit: "10mb"
+    })
+);
 
 const PORT = Number(process.env.PORT) || 5000;
 const DELAY = Number(process.env.DELAY) || 0;

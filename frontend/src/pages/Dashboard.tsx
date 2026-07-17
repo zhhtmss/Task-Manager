@@ -54,38 +54,34 @@ export function Dashboard() {
         backgroundImage: string,
         imageOpacity: number
     ) => {
+        const currentDate = new Date().toLocaleString();
+    
         const newTask: Task = {
             id: Date.now().toString(),
-
             title,
             description,
-
+        
             tags: tags
                 .split(",")
-                .filter(
-                    (tag) => tag.trim() !== ""
-                )
+                .filter((tag) => tag.trim() !== "")
                 .map((tag) => ({
                     id: Math.random().toString(),
                     text: tag.trim(),
                 })),
-
-            createdAt:
-                new Date().toLocaleString(),
-
-            updatedAt:
-                new Date().toLocaleString(),
-
+            
+            createdAt: currentDate,
+            updatedAt: currentDate,
+            
             status: "active",
-
             backgroundColor,
             backgroundImage,
             imageOpacity,
         };
-
+    
         await createTaskRequest(newTask);
-
+    
         setOpen(false);
+        setEditTask(null);
     };
 
     const deleteTask = async (id: string) => {
