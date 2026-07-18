@@ -1,16 +1,16 @@
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f7fb;
-    color: #0f172a;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f7fb;
+  color: #0f172a;
 }
 
 button,
 input,
 textarea {
-    font-family: inherit;
+  font-family: inherit;
 }

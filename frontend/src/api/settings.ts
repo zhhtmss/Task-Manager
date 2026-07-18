@@ -1,29 +1,29 @@
 import type { CardSettings } from "../types/settings";
 
 export const getSettings = async (): Promise<CardSettings> => {
-    const response = await fetch("/api/settings");
+  const response = await fetch("/api/settings");
 
-    if (!response.ok) {
-        throw new Error("Не вдалося завантажити налаштування");
-    }
+  if (!response.ok) {
+    throw new Error("Не вдалося завантажити налаштування");
+  }
 
-    return response.json();
+  return response.json();
 };
 
 export const updateSettingsRequest = async (
-    changes: Partial<CardSettings>
+  changes: Partial<CardSettings>,
 ): Promise<CardSettings> => {
-    const response = await fetch("/api/settings", {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(changes),
-    });
+  const response = await fetch("/api/settings", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(changes),
+  });
 
-    if (!response.ok) {
-        throw new Error("Не вдалося зберегти налаштування");
-    }
+  if (!response.ok) {
+    throw new Error("Не вдалося зберегти налаштування");
+  }
 
-    return response.json();
+  return response.json();
 };

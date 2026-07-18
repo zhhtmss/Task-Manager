@@ -1,10 +1,10 @@
 {
-    "backgroundColor": "#ffffff",
-    "textColor": "#000000",
-    "padding": 16,
-    "borderRadius": 8,
-    "width": 320,
-    "height": 350,
-    "titleFontSize": 18,
-    "descriptionFontSize": 14
+  "backgroundColor": "#ffffff",
+  "textColor": "#000000",
+  "padding": 16,
+  "borderRadius": 8,
+  "width": 320,
+  "height": 350,
+  "titleFontSize": 18,
+  "descriptionFontSize": 14
 }
