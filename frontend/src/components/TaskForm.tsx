@@ -22,7 +22,7 @@ type Props = {
 
 export const TaskForm = ({ open, onClose, onCreate, task }: Props) => {
   const [form] = Form.useForm();
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving] = useState(false);
 
   useEffect(() => {
     if (task) {
